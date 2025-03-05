@@ -6,9 +6,12 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ToDoDetailView: View {
-  @State var toDo: String
+  @State var toDo: ToDo
+  
+  @State private var item: String = ""
   @State private var reminderIsOn: Bool = false
   @State private var dueDate: Date = Calendar.current.date(byAdding: .day,
                                                            value: 1,
@@ -17,10 +20,11 @@ struct ToDoDetailView: View {
   @State private var isCompleted: Bool = false
   
   @Environment(\.dismiss) private var dismiss
+  @Environment(\.modelContext) var modelContext
   
   var body: some View {
     List {
-      TextField("Enter To Do Here", text: $toDo)
+      TextField("Enter To Do Here", text: $item)
         .font(.title)
         .textFieldStyle(.roundedBorder)
         .overlay {
@@ -37,7 +41,7 @@ struct ToDoDetailView: View {
         DatePicker("Due Date",
                    selection: $dueDate,
                    displayedComponents: .date)
-          .disabled(!reminderIsOn)
+        .disabled(!reminderIsOn)
       }
       .listRowSeparator(.hidden)
       
@@ -63,6 +67,13 @@ struct ToDoDetailView: View {
       
     }
     .listStyle(.plain)
+    .onAppear {
+      item = toDo.item
+      reminderIsOn = toDo.reminderIsOn
+      dueDate = toDo.dueDate
+      notes = toDo.notes
+      isCompleted = toDo.isCompleted
+    }
     .font(.title2)
     .navigationBarBackButtonHidden()
     .toolbar {
@@ -76,11 +87,27 @@ struct ToDoDetailView: View {
       
       ToolbarItem(placement: .topBarTrailing) {
         Button {
-          //
+          // Move data from local vars to toDo object
+          toDo.item = item
+          toDo.reminderIsOn = reminderIsOn
+          toDo.dueDate = dueDate
+          toDo.notes = notes
+          toDo.isCompleted = isCompleted
+          
+          // Save data to DB
+          modelContext.insert(toDo)
+          
+          // Push data to DB imediatly
+          guard let _ = try? modelContext.save() else {
+            print("🤬 ERROR: Failed to save data on ToDoDetailView.")
+            return
+          }
+          
+          dismiss()
         } label: {
           Text("Save")
         }
-
+        
       }
     }
     .font(.title2)
@@ -92,6 +119,7 @@ struct ToDoDetailView: View {
 
 #Preview {
   NavigationStack {
-    ToDoDetailView(toDo: "Item")
+    ToDoDetailView(toDo: ToDo())
+      .modelContainer(for: ToDo.self, inMemory: true)
   }
 }
