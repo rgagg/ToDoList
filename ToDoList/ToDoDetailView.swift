@@ -19,6 +19,8 @@ struct ToDoDetailView: View {
   @State private var notes: String = ""
   @State private var isCompleted: Bool = false
   
+  @FocusState private var focusedField: Bool
+  
   @Environment(\.dismiss) private var dismiss
   @Environment(\.modelContext) var modelContext
   
@@ -32,6 +34,7 @@ struct ToDoDetailView: View {
             .stroke(style: StrokeStyle(lineWidth: 1))
         }
         .listRowSeparator(.hidden)
+        .focused($focusedField)
         .padding(.top)
       
       Section(header: Text("")) {
@@ -73,6 +76,8 @@ struct ToDoDetailView: View {
       dueDate = toDo.dueDate
       notes = toDo.notes
       isCompleted = toDo.isCompleted
+      
+      focusedField = (item.isEmpty ? true : false)
     }
     .font(.title2)
     .navigationBarBackButtonHidden()
