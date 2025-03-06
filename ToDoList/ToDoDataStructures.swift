@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 
+@MainActor
 @Model
 class ToDo {
   var item: String = ""
@@ -30,3 +31,19 @@ class ToDo {
 }
 
 
+extension ToDo {
+  
+  // Mock Data
+  static var preview: ModelContainer {
+    
+    let container = try! ModelContainer(for: ToDo.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+    
+    // Add mock data
+    container.mainContext.insert(ToDo(item: "Learn SwiftUI", reminderIsOn: false, dueDate: Date(), notes: "", isCompleted: false))
+    container.mainContext.insert(ToDo(item: "Learn Swiftdata", reminderIsOn: true, dueDate: Calendar.current.date(byAdding: .day, value: 10, to: Date())!, notes: "", isCompleted: false))
+    container.mainContext.insert(ToDo(item: "Take Vacation", reminderIsOn: true, dueDate: Calendar.current.date(byAdding: .day, value: 30, to: Date())!, notes: "time for a break", isCompleted: false))
+    container.mainContext.insert(ToDo(item: "Make Diner", reminderIsOn: false, dueDate: Date(), notes: "", isCompleted: true))
+
+    return container
+  }
+}

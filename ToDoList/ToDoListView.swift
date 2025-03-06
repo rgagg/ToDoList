@@ -17,36 +17,48 @@ struct ToDoListView: View {
     NavigationStack {
       List {
         ForEach(toDos) { toDo in
-          HStack {
-            
-            Image(systemName: toDo.isCompleted ? "checkmark.circle" : toDo.reminderIsOn ? "calendar.circle" : "minus.circle")
-              .foregroundStyle(toDo.isCompleted ? .green : toDo.reminderIsOn ? .red : .blue)
-              .fontWeight(.bold)
-              .onTapGesture {
-                toDo.isCompleted.toggle()
-                guard let _ = try? modelContext.save() else {
-                  print("🤬 ERROR: Failed to save after toggle on ToDoListView.")
-                  return
+          VStack(alignment: .leading) {
+            HStack {
+              Image(systemName: toDo.isCompleted ? "checkmark.circle" : "minus.circle")
+                .foregroundStyle(toDo.isCompleted ? .green : .blue)
+                .fontWeight(.bold)
+                .onTapGesture {
+                  toDo.isCompleted.toggle()
+                  guard let _ = try? modelContext.save() else {
+                    print("🤬 ERROR: Failed to save after toggle on ToDoListView.")
+                    return
+                  }
+                }
+              
+              NavigationLink {
+                ToDoDetailView(toDo: toDo)
+              } label: {
+                VStack(alignment: .leading) {
+                  Text(toDo.item)
+                  if toDo.reminderIsOn {
+                    HStack() {
+                      Text(toDo.dueDate.formatted(date: .abbreviated, time: .omitted))
+                        .foregroundStyle(.secondary)
+                      Image(systemName: "calendar.badge.clock")
+                        .symbolRenderingMode(.multicolor)
+                    }
+                    .font(.callout)
                 }
               }
-            
-            NavigationLink {
-              ToDoDetailView(toDo: toDo)
-            } label: {
-              Text(toDo.item)
+              .swipeActions(edge: .trailing) {
+                Button("Delete", role: .destructive) {
+                  modelContext.delete(toDo)
+                  // Push data to DB imediatly
+                  guard let _ = try? modelContext.save() else {
+                    print("🤬 ERROR: Failed to save after delete on ToDoListView.")
+                    return
+                  }
+                }
+              }
             }
-            .swipeActions(edge: .trailing) {
-              Button("Delete", role: .destructive) {
-                modelContext.delete(toDo)
-                // Push data to DB imediatly
-                guard let _ = try? modelContext.save() else {
-                  print("🤬 ERROR: Failed to save after delete on ToDoListView.")
-                  return
-                }
-              }
+            .font(.title2)
             }
           }
-          .font(.title2)
         }
       }
       .navigationBarTitleDisplayMode(.automatic)
@@ -74,5 +86,5 @@ struct ToDoListView: View {
 
 #Preview {
   ToDoListView()
-    .modelContainer(for: ToDo.self, inMemory: true)
+    .modelContainer(ToDo.preview)
 }
