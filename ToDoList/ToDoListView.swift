@@ -11,6 +11,7 @@ import SwiftData
 struct ToDoListView: View {
   @Query var toDos: [ToDo]
   @State private var showAddItemSheet: Bool = false
+  @State private var showInfoSheet: Bool = false
   @State private var sortSelection: SortOption = .open
   @Environment(\.modelContext) var modelContext
   
@@ -24,12 +25,25 @@ struct ToDoListView: View {
             ToDoDetailView(toDo: ToDo())
           }
         })
+        .sheet(isPresented: $showInfoSheet, content: {
+          NavigationStack {
+            ToDoAboutView()
+          }
+        })
         .toolbar {
           ToolbarItem(placement: .topBarTrailing) {
             Button {
               showAddItemSheet.toggle()
             } label: {
               Image(systemName: "plus")
+            }
+          }
+          
+          ToolbarItem(placement: .topBarLeading) {
+            Button {
+              showInfoSheet.toggle()
+            } label: {
+              Image(systemName: "info.circle.fill")
             }
           }
           
