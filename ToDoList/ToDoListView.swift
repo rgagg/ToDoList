@@ -11,72 +11,38 @@ import SwiftData
 struct ToDoListView: View {
   @Query var toDos: [ToDo]
   @State private var showAddItemSheet: Bool = false
+  @State private var sortSelection: SortOption = .open
   @Environment(\.modelContext) var modelContext
   
   var body: some View {
     NavigationStack {
-      List {
-        ForEach(toDos) { toDo in
-          VStack(alignment: .leading) {
-            HStack {
-              Image(systemName: toDo.isCompleted ? "checkmark.circle" : "minus.circle")
-                .foregroundStyle(toDo.isCompleted ? .green : .blue)
-                .fontWeight(.bold)
-                .onTapGesture {
-                  toDo.isCompleted.toggle()
-                  guard let _ = try? modelContext.save() else {
-                    print("🤬 ERROR: Failed to save after toggle on ToDoListView.")
-                    return
-                  }
-                }
-              
-              NavigationLink {
-                ToDoDetailView(toDo: toDo)
-              } label: {
-                VStack(alignment: .leading) {
-                  Text(toDo.item)
-                  if toDo.reminderIsOn {
-                    HStack() {
-                      Text(toDo.dueDate.formatted(date: .abbreviated, time: .omitted))
-                        .foregroundStyle(.secondary)
-                      Image(systemName: "calendar.badge.clock")
-                        .symbolRenderingMode(.multicolor)
-                    }
-                    .font(.callout)
-                }
-              }
-              .swipeActions(edge: .trailing) {
-                Button("Delete", role: .destructive) {
-                  modelContext.delete(toDo)
-                  // Push data to DB imediatly
-                  guard let _ = try? modelContext.save() else {
-                    print("🤬 ERROR: Failed to save after delete on ToDoListView.")
-                    return
-                  }
-                }
-              }
-            }
-            .font(.title2)
+      ToDoSortedList(sortSelection: sortSelection)
+        .navigationBarTitleDisplayMode(.automatic)
+        .navigationTitle("To Do List")
+        .sheet(isPresented: $showAddItemSheet, content: {
+          NavigationStack {
+            ToDoDetailView(toDo: ToDo())
+          }
+        })
+        .toolbar {
+          ToolbarItem(placement: .topBarTrailing) {
+            Button {
+              showAddItemSheet.toggle()
+            } label: {
+              Image(systemName: "plus")
             }
           }
-        }
-      }
-      .navigationBarTitleDisplayMode(.automatic)
-      .navigationTitle("To Do List")
-      .sheet(isPresented: $showAddItemSheet, content: {
-        NavigationStack {
-          ToDoDetailView(toDo: ToDo())
-        }
-      })
-      .toolbar {
-        ToolbarItem(placement: .topBarTrailing) {
-          Button {
-            showAddItemSheet.toggle()
-          } label: {
-            Image(systemName: "plus")
+          
+          ToolbarItem(placement: .bottomBar) {
+            Picker("Sort Order", selection: $sortSelection) {
+              //
+              ForEach(SortOption.allCases, id: \.self) { order in
+                Text(order.rawValue)
+              }
+            }
+            .pickerStyle(SegmentedPickerStyle())
           }
         }
-      }
     }
     .font(.title2)
     .listStyle(.grouped)
